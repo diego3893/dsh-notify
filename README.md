@@ -25,23 +25,23 @@ DSH（DeepSeek Harness）桌面端插件：需要你授权、需要你回答、�
 
 ## 安装
 
-### 推荐：打包安装
+### 推荐：从 Releases 下载打包好的插件
+
+到 [Releases](https://github.com/diego3893/dsh-notify/releases) 页面下载 `dsh-notify-<版本>.tgz`，
+然后：
 
 ```powershell
-# DSH 自带的运行时（路径随安装位置而变，按自己的实际位置替换）
-$node  = "$env:LOCALAPPDATA\Programs\DeepSeek Harness\resources\app.asar.unpacked\..."  # 或用任意 Node ≥ 22
+# DSH 自带运行时里的 node / pnpm（按自己的实际安装位置替换）
+$node  = "<dsh-runtime>\dependencies\node\bin\node.exe"     # 任意 Node ≥ 22 均可
 $pnpm  = "<dsh-runtime>\dependencies\pnpm\bin\pnpm.mjs"
 $profile = "$env:USERPROFILE\.dsh\profiles\desktop"
+$tgz = "$env:USERPROFILE\Downloads\dsh-notify-0.1.0.tgz"
 
-# 1) 在仓库根目录打包
-cd <本仓库>
-& $node $pnpm pack
-
-# 2) 装进桌面端 profile
+# 1) 装进桌面端 profile
 cd $profile
-& $node $pnpm add <本仓库>\dsh-notify-0.1.0.tgz --config.confirmModulesPurge=false
+& $node $pnpm add $tgz --config.confirmModulesPurge=false
 
-# 3) 让 profile 选中这个 bundle（写回 JSON 时不要带 BOM）
+# 2) 让 profile 选中这个 bundle（写回 JSON 时不要带 BOM）
 $pkg = Get-Content package.json -Raw | ConvertFrom-Json
 if (@($pkg.dsh.profile.bundles) -notcontains 'dsh-notify') {
     $pkg.dsh.profile.bundles = @($pkg.dsh.profile.bundles) + 'dsh-notify'
@@ -54,14 +54,30 @@ if (@($pkg.dsh.profile.bundles) -notcontains 'dsh-notify') {
 
 装完**重启 DSH**（托盘菜单退出后重新打开）生效。
 
+### 自己打包（想改代码或没有 Release 时）
+
+```powershell
+cd <仓库根目录>
+& $node $pnpm pack                                  # 生成 dsh-notify-0.1.0.tgz
+cd $profile
+& $node $pnpm add <仓库根目录>\dsh-notify-0.1.0.tgz --config.confirmModulesPurge=false
+# 再执行上面的第 2 步
+```
+
 > 注意：pnpm 按 tarball 路径缓存，覆盖同名 tgz 后可能报 `Already up to date` 而不更新内容。
-> 更新版本时用新的文件名（如 `-r2`），或先 `pnpm remove dsh-notify` 再 `add`。
+> 换了内容就换文件名（如 `-r2`），或先 `pnpm remove dsh-notify` 再 `add`。
+
+### 为什么用 tgz 而不是目录
+
+`pnpm add <目录>` 会写成 `link:` 依赖，并在 `node_modules` 里建软链指回源目录：源目录一旦
+移动或删除，插件立刻断链，而且坏链接会让后续 `pnpm add` 直接报错。安装 `.tgz` 是解包成
+**真实副本**，之后把 tgz 删掉也不影响运行。
 
 ### 也可以用插件管理器
 
-DSH 桌面端侧栏 **插件（Plugins）** 页面 → 安装本地包 → 填 `.tgz` 路径或本仓库目录
-（填目录会变成软链）。或让 agent 用 `plugin_manager` 工具的 `install_bundle`，该操作需要
-`danger-full-access`，DSH 会先向你申请授权。
+DSH 桌面端侧栏 **插件（Plugins）** 页面 → 安装本地包 → 填下载好的 `.tgz` 路径（填目录会变成软链）。
+或让 agent 用 `plugin_manager` 工具的 `install_bundle`，该操作需要 `danger-full-access`，
+DSH 会先向你申请授权。
 
 ## 配置
 
