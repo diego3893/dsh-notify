@@ -27,10 +27,6 @@ DSH（DeepSeek Harness）桌面端插件：需要你授权、需要你回答、�
 
 ### 推荐：打包安装
 
-**为什么不直接 `pnpm add <目录>`**：那样会写成 `link:` 依赖并在 `node_modules` 里建软链指回
-原目录，源目录一旦移动就断链，而且坏链接会让后续 `pnpm add` 直接报错。安装 `.tgz` 则是解包成
-**真实副本**，之后搬走或删除 tgz 都不影响运行。
-
 ```powershell
 # DSH 自带的运行时（路径随安装位置而变，按自己的实际位置替换）
 $node  = "$env:LOCALAPPDATA\Programs\DeepSeek Harness\resources\app.asar.unpacked\..."  # 或用任意 Node ≥ 22
@@ -84,10 +80,6 @@ DSH 桌面端侧栏 **插件（Plugins）** 页面 → 安装本地包 → 填 `
     queueDir: ''        # 通知队列目录，空 = %TEMP%\dsh-notify-queue
 ```
 
-> 另有一个仅用于测试的 `onDeliver(item)` 回调：每次通知被真正交付时调用一次。
-> 队列文件会被常驻通道立刻消费，所以测试无法通过"文件在不在"判断投递是否发生，
-> 这个钩子提供与竞态无关的观测点。生产配置无需关心它。
-
 ## 自检
 
 不需要装进 DSH，也不需要 DSH 在运行，就能验证插件逻辑（在本仓库根目录执行）：
@@ -110,32 +102,6 @@ node test-live.mjs --real    # 同上，但写进真实队列目录，会看到�
   - ⛔ DSH 执行出错 :: ...
 ```
 
-## 工作原理（为什么这么实现）
-
-这个包只有一个 Host 入口，但通知链路上有三个必须这么做的决定，都是实测得出的：
-
-1. **常驻通道，而不是每次弹一个进程。**
-   `notify.ps1` 是一个长期存活的进程，只建**一个** `NotifyIcon`，按顺序显示队列里的通知。
-   一开始是"每条通知起一个 PowerShell 进程各自建图标"，结果 4 条通知都写了 `displayed`、
-   屏幕上**只出现 1 条**：Windows 把"同一应用、新进程、新图标"的后续气泡当成屏幕上那条的
-   重复而丢弃。复用一个图标实例才能让第 2..n 条真正出现。
-
-2. **`start-notifier.ps1` 用 `Start-Process` 启动通道，而不是从 Node 直接 spawn。**
-   在 Windows 上，Node 用 `detached: true` spawn 出来的 PowerShell 子进程会在执行第一条
-   语句之前就死掉——没有 `error` 事件、没有 stderr、不写任何文件（实测复现）。
-
-3. **一条通知一个文件（`item-*.json`），而不是追加同一个 JSONL。**
-   生产者与读取方就不会争抢同一个文件句柄；先写 `.tmp-*` 再改名，通道也不会读到写了一半的内容。
-
-另外两个环境约束：
-
-- **托盘气泡而不是原生 toast**：PowerShell 进程没有包身份（package identity），调用 WinRT
-  `ToastNotificationManager` 一律失败（`0x80073D54`）。`NotifyIcon` 气泡在 Win10/11 上同样以
-  通知横幅显示，且不需要包身份。
-- **`.ps1` / `.cmd` 一律纯 ASCII**：Windows PowerShell 5.1 会把无 BOM 的 `.ps1` 按 ANSI/GBK 读，
-  脚本里的中文会变成语法错误。中文只出现在 Node/JSON 一侧，队列文件由
-  `[System.IO.File]::ReadAllLines(..., UTF8)` 显式按 UTF-8 读取。
-
 ## 目录
 
 | 文件 | 作用 |
@@ -153,8 +119,6 @@ node test-live.mjs --real    # 同上，但写进真实队列目录，会看到�
 - 只在 Windows 上有效（通道是 PowerShell + `NotifyIcon`）。
 - 通知由常驻通道串行显示，同一时刻只有一条气泡；`notifyGapMs` 控制投递节奏。
 - 通道空闲 30 分钟后自行退出，下次有通知时自动拉起。
-- 另有一个**独立监看进程**的实现（不挂 DSH 事件、直接读会话日志），与插件二选一，
-  同时启用会重复提示；它作为单独项目维护，不在本仓库内。
 
 ## License
 
