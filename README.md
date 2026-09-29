@@ -27,6 +27,8 @@ DSH（DeepSeek Harness）桌面端插件：需要你授权、需要你回答、�
 
 ### 推荐：从 Releases 下载打包好的插件
 
+（`pnpm add <目录>` 会链到源码目录、移动即断链，所以请用打包好的 `.tgz`。）
+
 到 [Releases](https://github.com/diego3893/dsh-notify/releases) 页面下载 `dsh-notify-<版本>.tgz`，
 然后：
 
@@ -67,11 +69,6 @@ cd $profile
 > 注意：pnpm 按 tarball 路径缓存，覆盖同名 tgz 后可能报 `Already up to date` 而不更新内容。
 > 换了内容就换文件名（如 `-r2`），或先 `pnpm remove dsh-notify` 再 `add`。
 
-### 为什么用 tgz 而不是目录
-
-`pnpm add <目录>` 会写成 `link:` 依赖，并在 `node_modules` 里建软链指回源目录：源目录一旦
-移动或删除，插件立刻断链，而且坏链接会让后续 `pnpm add` 直接报错。安装 `.tgz` 是解包成
-**真实副本**，之后把 tgz 删掉也不影响运行。
 
 ### 也可以用插件管理器
 
