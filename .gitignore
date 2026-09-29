@@ -1,0 +1,18 @@
+# 打包产物（pnpm pack 生成，不要提交）
+*.tgz
+
+# 依赖与锁文件（本包没有运行时依赖；装了 DSH profile 才会用到）
+node_modules/
+pnpm-lock.yaml
+
+# 通知通道的队列与日志（%TEMP% 之外若有人改到仓库里，别提交）
+notifier.log
+notifier.pid
+item-*.json
+.tmp-*.json
+
+# 编辑器 / 系统
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini

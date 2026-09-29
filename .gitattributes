@@ -1,0 +1,10 @@
+# 统一换行符：仓库内存 LF，检出时按平台还原。
+* text=auto eol=lf
+
+# Windows 专用脚本保持 CRLF（PowerShell 5.1 与 cmd 对此更友好）。
+*.ps1 text eol=crlf
+*.cmd text eol=crlf
+
+# 二进制/压缩内容不做换行转换。
+*.tgz binary
+*.png binary

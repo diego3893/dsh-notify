@@ -1,0 +1,32 @@
+{
+  "name": "dsh-notify",
+  "version": "0.1.0",
+  "private": true,
+  "description": "DSH 桌面通知：审批请求、提问、任务结束、执行出错时弹 Windows 托盘气泡",
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "license": "MIT",
+  "files": [
+    "lib",
+    "notify.ps1",
+    "start-notifier.ps1",
+    "cordis.patch.yml",
+    "test-plugin.mjs",
+    "test-live.mjs",
+    "README.md"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./package.json": "./package.json"
+  }
+}
